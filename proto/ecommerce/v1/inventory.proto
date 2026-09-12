@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+package ecommerce.v1;
+
+// Product message definition
+message Product {
+  string id = 1;
+  string name = 2;
+  double price = 3;
+  int32 stock = 4;
+  string description = 5;
+}
+
+// Request to list all products
+message GetProductsRequest {}
+
+// Response containing list of products
+message GetProductsResponse {
+  repeated Product products = 1;
+}
+
+// Request for fetching stock of a single product
+message GetStockRequest {
+  string product_id = 1;
+}
+
+// Response for single product stock
+message GetStockResponse {
+  string product_id = 1;
+  int32 stock = 2;
+  double price = 3;
+}
+
+// Request to update product stock
+message UpdateStockRequest {
+  string product_id = 1;
+  int32 quantity_change = 2; // e.g. -1 for purchasing, +10 for restocking
+}
+
+// Response after updating stock
+message UpdateStockResponse {
+  string product_id = 1;
+  int32 new_stock = 2;
+  bool success = 3;
+  string message = 4;
+}
+
+// Request to track order status stream
+message StreamOrderStatusRequest {
+  string order_id = 1;
+}
+
+// Response payload for order status stream
+message StreamOrderStatusResponse {
+  string order_id = 1;
+  string status = 2; // e.g., "PENDING", "PROCESSING", "SHIPPED", "DELIVERED"
+  int32 progress_percentage = 3;
+  string timestamp = 4;
+}
+
+// gRPC Inventory Service definition
+service InventoryService {
+  // Unary RPC: Frontend/BFF requests catalog
+  rpc GetProducts(GetProductsRequest) returns (GetProductsResponse);
+  
+  // Unary RPC: Check product stock
+  rpc GetStock(GetStockRequest) returns (GetStockResponse);
+  
+  // Unary RPC: Modify product stock
+  rpc UpdateStock(UpdateStockRequest) returns (UpdateStockResponse);
+  
+  // Server-Streaming RPC: Direct gRPC-Web stream sending live status updates to frontend
+  rpc StreamOrderStatus(StreamOrderStatusRequest) returns (stream StreamOrderStatusResponse);
+}

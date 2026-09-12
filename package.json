@@ -1,0 +1,15 @@
+{
+  "name": "fullstack-grpc-graphql-ecommerce",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev:grpc": "npm run dev --workspace=services/grpc-server",
+    "dev:graphql": "npm run dev --workspace=services/graphql-server",
+    "dev:frontend": "npm run dev --workspace=frontend"
+  },
+  "workspaces": [
+    "services/grpc-server",
+    "services/graphql-server",
+    "frontend"
+  ]
+}

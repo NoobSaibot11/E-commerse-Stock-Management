@@ -1,0 +1,11 @@
+version: v2
+
+plugins:
+  - remote: buf.build/bufbuild/es
+    out: services/grpc-server/src/gen/proto
+    opt:
+      - target=ts
+  - remote: buf.build/connectrpc/es
+    out: services/grpc-server/src/gen/proto
+    opt:
+      - target=ts

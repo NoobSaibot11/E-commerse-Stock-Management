@@ -1,6 +1,6 @@
 import { createClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
-import { InventoryService } from "../../grpc-server/src/gen/proto/ecommerce/v1/inventory_connect.js";
+import { InventoryService } from "../../grpc-server/src/gen/proto/ecommerce/v1/inventory_pb.js";
 
 // Node 18+ native fetch / web transport
 const transport = createConnectTransport({
@@ -71,23 +71,20 @@ export const resolvers = {
         `[GraphQL BFF] Checkout mutation for product: ${args.productId}, quantity: ${args.quantity}`,
       );
 
-      const updateResp = await grpcClient.updateStock({
-        productId: args.productId,
-        quantityChange: -args.quantity,
+      const orderResp = await grpcClient.createOrder({
+        items: [{ productId: args.productId, quantity: args.quantity }],
       });
 
-      if (!updateResp.success) {
+      if (!orderResp.success) {
         return {
           orderId: "",
           success: false,
-          message: updateResp.message,
+          message: orderResp.message,
         };
       }
 
-      const orderId = `ORD-${Math.floor(100000 + Math.random() * 900000)}`;
-
       return {
-        orderId,
+        orderId: orderResp.orderId,
         success: true,
         message:
           "Order placed successfully! You can track live status via direct gRPC stream.",

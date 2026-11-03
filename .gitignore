@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.env
+
+# Generated code (recreate with `npm run generate`)
+services/grpc-server/src/gen/
+services/grpc-server/src/generated/

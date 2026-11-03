@@ -1,11 +1,9 @@
 version: v2
 
+# protobuf-es v2 generates both the messages and the service descriptor
+# (InventoryService) into inventory_pb.ts, which Connect v2 uses directly.
 plugins:
-  - remote: buf.build/bufbuild/es
-    out: services/grpc-server/src/gen/proto
-    opt:
-      - target=ts
-  - remote: buf.build/connectrpc/es
+  - local: protoc-gen-es
     out: services/grpc-server/src/gen/proto
     opt:
       - target=ts

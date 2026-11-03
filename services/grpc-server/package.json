@@ -1,9 +1,15 @@
 {
   "name": "grpc-server",
   "version": "1.0.0",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
+    "db:generate": "prisma generate",
+    "db:migrate": "prisma migrate dev",
+    "db:deploy": "prisma migrate deploy",
+    "db:seed": "prisma db seed",
+    "db:studio": "prisma studio",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -13,10 +19,14 @@
   "dependencies": {
     "@bufbuild/protobuf": "^2.15.0",
     "@connectrpc/connect": "^2.2.0",
-    "@connectrpc/connect-node": "^2.2.0"
+    "@connectrpc/connect-node": "^2.2.0",
+    "@prisma/adapter-pg": "^7.0.0",
+    "@prisma/client": "^7.0.0",
+    "dotenv": "^17.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.20.2",
+    "prisma": "^7.0.0",
     "tsx": "^4.23.13",
     "typescript": "^7.0.2"
   }

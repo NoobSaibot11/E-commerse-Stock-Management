@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { createClient } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
-import { InventoryService } from "../../services/grpc-server/src/gen/proto/ecommerce/v1/inventory_connect";
+import { InventoryService } from "../../services/grpc-server/src/gen/proto/ecommerce/v1/inventory_pb";
 
 // Initialize Connect-Web transport for direct gRPC-Web streaming calls from browser to gRPC server
 const grpcWebTransport = createConnectTransport({

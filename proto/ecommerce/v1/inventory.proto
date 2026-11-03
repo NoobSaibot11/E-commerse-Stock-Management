@@ -45,6 +45,26 @@ message UpdateStockResponse {
   string message = 4;
 }
 
+// A single line in an order
+message OrderItemInput {
+  string product_id = 1;
+  int32 quantity = 2;
+}
+
+// Request to place an order. Stock for every item is reserved atomically:
+// either all items are in stock and the order is created, or nothing changes.
+message CreateOrderRequest {
+  repeated OrderItemInput items = 1;
+}
+
+// Response after placing an order
+message CreateOrderResponse {
+  string order_id = 1;
+  bool success = 2;
+  string message = 3;
+  double total = 4;
+}
+
 // Request to track order status stream
 message StreamOrderStatusRequest {
   string order_id = 1;
@@ -68,7 +88,10 @@ service InventoryService {
   
   // Unary RPC: Modify product stock
   rpc UpdateStock(UpdateStockRequest) returns (UpdateStockResponse);
-  
+
+  // Unary RPC: Place an order, reserving stock in one database transaction
+  rpc CreateOrder(CreateOrderRequest) returns (CreateOrderResponse);
+
   // Server-Streaming RPC: Direct gRPC-Web stream sending live status updates to frontend
   rpc StreamOrderStatus(StreamOrderStatusRequest) returns (stream StreamOrderStatusResponse);
 }

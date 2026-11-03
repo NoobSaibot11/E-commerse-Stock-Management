@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "generate": "buf generate && npm run db:generate --workspace=services/grpc-server",
+    "test": "npm test --workspace=services/grpc-server --workspace=services/graphql-server",
+    "typecheck": "tsc -p services/grpc-server && tsc -p services/graphql-server",
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
     "db:migrate": "npm run db:migrate --workspace=services/grpc-server",

@@ -1,10 +1,12 @@
-import { createClient } from "@connectrpc/connect";
+import { createClient, type Client } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { InventoryService } from "../../grpc-server/src/gen/proto/ecommerce/v1/inventory_pb.js";
 
+export type InventoryClient = Client<typeof InventoryService>;
+
 // Node 18+ native fetch / web transport
 const transport = createConnectTransport({
-  baseUrl: "http://127.0.0.1:50051",
+  baseUrl: process.env.GRPC_URL ?? "http://127.0.0.1:50051",
 });
 
 export const grpcClient = createClient(InventoryService, transport);
@@ -34,7 +36,8 @@ export const typeDefs = /* GraphQL */ `
   }
 `;
 
-export const resolvers = {
+// Resolvers take the gRPC client as a parameter so tests can pass a fake one.
+export const createResolvers = (grpcClient: InventoryClient) => ({
   Query: {
     products: async () => {
       console.log(
@@ -91,4 +94,6 @@ export const resolvers = {
       };
     },
   },
-};
+});
+
+export const resolvers = createResolvers(grpcClient);

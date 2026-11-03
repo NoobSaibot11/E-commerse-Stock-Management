@@ -5,3 +5,6 @@ dist/
 # Generated code (recreate with `npm run generate`)
 services/grpc-server/src/gen/
 services/grpc-server/src/generated/
+
+# Local Claude Code preview config (machine-specific paths)
+.claude/launch.json

@@ -8,11 +8,17 @@ import {
   listProducts,
   setOrderStatus,
 } from "../src/inventory.js";
-import { createProduct, resetDatabase, stockOf } from "./helpers.js";
+import { createProduct, createUser, resetDatabase, stockOf } from "./helpers.js";
 
 const UNKNOWN_ID = "00000000-0000-0000-0000-000000000000";
 
-beforeEach(resetDatabase);
+// Every order belongs to a user.
+let customerId: string;
+
+beforeEach(async () => {
+  await resetDatabase();
+  customerId = (await createUser()).user.id;
+});
 afterAll(() => prisma.$disconnect());
 
 describe("listProducts", () => {
@@ -86,7 +92,7 @@ describe("createOrder", () => {
     const keyboard = await createProduct({ price: "129.99", stock: 5 });
     const mouse = await createProduct({ price: "79.99", stock: 5 });
 
-    const { orderId, total } = await createOrder([
+    const { orderId, total } = await createOrder(customerId, [
       { productId: keyboard.id, quantity: 2 },
       { productId: mouse.id, quantity: 1 },
     ]);
@@ -97,6 +103,7 @@ describe("createOrder", () => {
       include: { items: true },
     });
     expect(order.status).toBe("ORDER_PLACED");
+    expect(order.userId).toBe(customerId);
     expect(order.total.toFixed(2)).toBe("339.97");
     expect(order.items).toHaveLength(2);
     expect(
@@ -108,7 +115,7 @@ describe("createOrder", () => {
 
   it("keeps the purchase price when the product price changes later", async () => {
     const product = await createProduct({ price: "50.00" });
-    const { orderId } = await createOrder([{ productId: product.id, quantity: 1 }]);
+    const { orderId } = await createOrder(customerId, [{ productId: product.id, quantity: 1 }]);
 
     await prisma.product.update({
       where: { id: product.id },
@@ -122,7 +129,7 @@ describe("createOrder", () => {
   it("merges duplicate lines for the same product", async () => {
     const product = await createProduct({ stock: 10 });
 
-    const { orderId } = await createOrder([
+    const { orderId } = await createOrder(customerId, [
       { productId: product.id, quantity: 2 },
       { productId: product.id, quantity: 3 },
     ]);
@@ -138,7 +145,7 @@ describe("createOrder", () => {
     const scarce = await createProduct({ name: "Rare Item", stock: 1 });
 
     await expect(
-      createOrder([
+      createOrder(customerId, [
         { productId: plenty.id, quantity: 3 },
         { productId: scarce.id, quantity: 2 },
       ]),
@@ -151,15 +158,15 @@ describe("createOrder", () => {
 
   it("rejects an unknown product", async () => {
     await expect(
-      createOrder([{ productId: UNKNOWN_ID, quantity: 1 }]),
+      createOrder(customerId, [{ productId: UNKNOWN_ID, quantity: 1 }]),
     ).rejects.toThrow(`Product ${UNKNOWN_ID} not found`);
     await expect(
-      createOrder([{ productId: "prod-1", quantity: 1 }]),
+      createOrder(customerId, [{ productId: "prod-1", quantity: 1 }]),
     ).rejects.toThrow(InventoryError);
   });
 
   it("rejects an empty order", async () => {
-    await expect(createOrder([])).rejects.toThrow(
+    await expect(createOrder(customerId, [])).rejects.toThrow(
       "An order must contain at least one item",
     );
   });
@@ -167,7 +174,7 @@ describe("createOrder", () => {
   it.each([0, -1, 1.5])("rejects quantity %s", async (quantity) => {
     const product = await createProduct();
     await expect(
-      createOrder([{ productId: product.id, quantity }]),
+      createOrder(customerId, [{ productId: product.id, quantity }]),
     ).rejects.toThrow("Quantity must be a positive whole number");
     expect(await stockOf(product.id)).toBe(10);
   });
@@ -177,7 +184,7 @@ describe("createOrder", () => {
 
     const results = await Promise.allSettled(
       Array.from({ length: 20 }, () =>
-        createOrder([{ productId: product.id, quantity: 1 }]),
+        createOrder(customerId, [{ productId: product.id, quantity: 1 }]),
       ),
     );
 
@@ -196,7 +203,7 @@ describe("createOrder", () => {
 describe("setOrderStatus", () => {
   it("updates the saved status", async () => {
     const product = await createProduct();
-    const { orderId } = await createOrder([{ productId: product.id, quantity: 1 }]);
+    const { orderId } = await createOrder(customerId, [{ productId: product.id, quantity: 1 }]);
 
     await setOrderStatus(orderId, "DISPATCHED");
 

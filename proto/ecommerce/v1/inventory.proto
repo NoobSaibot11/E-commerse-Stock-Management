@@ -86,12 +86,14 @@ service InventoryService {
   // Unary RPC: Check product stock
   rpc GetStock(GetStockRequest) returns (GetStockResponse);
   
-  // Unary RPC: Modify product stock
+  // Unary RPC: Modify product stock (admin only)
   rpc UpdateStock(UpdateStockRequest) returns (UpdateStockResponse);
 
-  // Unary RPC: Place an order, reserving stock in one database transaction
+  // Unary RPC: Place an order for the signed-in user, reserving stock in one
+  // database transaction
   rpc CreateOrder(CreateOrderRequest) returns (CreateOrderResponse);
 
-  // Server-Streaming RPC: Direct gRPC-Web stream sending live status updates to frontend
+  // Server-Streaming RPC: Direct gRPC-Web stream sending live status updates to frontend.
+  // Only the order's owner (or an admin) may track it.
   rpc StreamOrderStatus(StreamOrderStatusRequest) returns (stream StreamOrderStatusResponse);
 }

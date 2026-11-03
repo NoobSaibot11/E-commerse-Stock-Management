@@ -24,7 +24,8 @@
     "@connectrpc/connect-node": "^2.2.0",
     "@prisma/adapter-pg": "^7.0.0",
     "@prisma/client": "^7.0.0",
-    "dotenv": "^17.0.0"
+    "dotenv": "^17.0.0",
+    "jose": "^6.2.15"
   },
   "devDependencies": {
     "@types/node": "^22.20.2",

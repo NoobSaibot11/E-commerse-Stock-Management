@@ -5,7 +5,11 @@ export default defineConfig({
   test: {
     include: ["test/**/*.test.ts"],
     globalSetup: ["./test/global-setup.ts"],
-    env: { DATABASE_URL: TEST_DATABASE_URL },
+    env: {
+      DATABASE_URL: TEST_DATABASE_URL,
+      JWT_SECRET: "test-only-secret-0123456789abcdef0123456789",
+      JWT_EXPIRES_IN: "1h",
+    },
     // All test files share one database, so run them one at a time.
     fileParallelism: false,
     // Hide the services' request logging unless a test fails.

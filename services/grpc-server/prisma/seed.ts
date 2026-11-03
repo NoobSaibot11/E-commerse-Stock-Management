@@ -1,4 +1,20 @@
 import { prisma } from "../src/db.js";
+import { hashPassword } from "../src/auth/password.js";
+
+// Local development accounts. Override the passwords with SEED_ADMIN_PASSWORD
+// and SEED_CUSTOMER_PASSWORD; never seed these defaults into a real deployment.
+const users = [
+  {
+    email: "admin@example.com",
+    password: process.env.SEED_ADMIN_PASSWORD ?? "admin-dev-password",
+    role: "ADMIN" as const,
+  },
+  {
+    email: "customer@example.com",
+    password: process.env.SEED_CUSTOMER_PASSWORD ?? "customer-dev-password",
+    role: "CUSTOMER" as const,
+  },
+];
 
 // Upserting by SKU keeps the seed safe to run more than once.
 const products = [
@@ -40,7 +56,14 @@ async function main() {
       create: product,
     });
   }
-  console.log(`🌱 Seeded ${products.length} products`);
+  for (const { email, password, role } of users) {
+    await prisma.user.upsert({
+      where: { email },
+      update: {},
+      create: { email, role, passwordHash: await hashPassword(password) },
+    });
+  }
+  console.log(`🌱 Seeded ${products.length} products and ${users.length} users`);
 }
 
 main()

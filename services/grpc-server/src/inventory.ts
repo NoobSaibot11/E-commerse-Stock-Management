@@ -51,11 +51,11 @@ export interface OrderLineInput {
 }
 
 /**
- * Creates an order and reserves stock for every line in one transaction.
- * If any line can't be fulfilled, the whole transaction rolls back and no
- * stock changes.
+ * Creates an order for a user and reserves stock for every line in one
+ * transaction. If any line can't be fulfilled, the whole transaction rolls
+ * back and no stock changes.
  */
-export async function createOrder(lines: OrderLineInput[]) {
+export async function createOrder(userId: string, lines: OrderLineInput[]) {
   if (lines.length === 0) {
     throw new InventoryError("An order must contain at least one item");
   }
@@ -105,7 +105,7 @@ export async function createOrder(lines: OrderLineInput[]) {
     );
 
     const order = await tx.order.create({
-      data: { total, items: { create: items } },
+      data: { userId, total, items: { create: items } },
     });
     return { orderId: order.id, total };
   });

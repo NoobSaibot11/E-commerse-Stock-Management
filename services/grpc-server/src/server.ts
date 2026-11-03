@@ -16,7 +16,7 @@ const server = http.createServer((req, res) => {
   res.setHeader("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
   res.setHeader(
     "Access-Control-Allow-Headers",
-    "Content-Type, Connect-Protocol-Version, Connect-Timeout-Ms",
+    "Content-Type, Authorization, Connect-Protocol-Version, Connect-Timeout-Ms",
   );
   res.setHeader(
     "Access-Control-Expose-Headers",

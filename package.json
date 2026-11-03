@@ -5,7 +5,8 @@
   "scripts": {
     "generate": "buf generate && npm run db:generate --workspace=services/grpc-server",
     "test": "npm test --workspace=services/grpc-server --workspace=services/graphql-server",
-    "typecheck": "tsc -p services/grpc-server && tsc -p services/graphql-server",
+    "typecheck": "tsc -p services/grpc-server && tsc -p services/graphql-server && tsc -p frontend",
+    "smoke": "node scripts/smoke-test.mjs",
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
     "stack:up": "docker compose up --build -d",

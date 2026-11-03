@@ -2,8 +2,11 @@ import { createClient, type Interceptor } from "@connectrpc/connect";
 import { createConnectTransport } from "@connectrpc/connect-web";
 import { InventoryService } from "../../services/grpc-server/src/gen/proto/ecommerce/v1/inventory_pb";
 
-const GRAPHQL_URL = "http://127.0.0.1:4000/graphql";
-const GRPC_URL = "http://127.0.0.1:50051";
+// Local dev talks to each server on its own port. The Docker build sets
+// these to same-origin paths that nginx proxies (see docker/nginx.conf).
+const GRAPHQL_URL =
+  import.meta.env.VITE_GRAPHQL_URL ?? "http://127.0.0.1:4000/graphql";
+const GRPC_URL = import.meta.env.VITE_GRPC_URL ?? "http://127.0.0.1:50051";
 const TOKEN_KEY = "authToken";
 
 export interface User {

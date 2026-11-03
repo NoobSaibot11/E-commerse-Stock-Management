@@ -22,6 +22,11 @@ const yoga = createYoga({
   }),
 });
 
+// Liveness probe for Docker / orchestrators
+app.get("/health", (_req, res) => {
+  res.json({ status: "ok" });
+});
+
 // Bind Yoga middleware to Express
 app.use(yoga.graphqlEndpoint, yoga);
 

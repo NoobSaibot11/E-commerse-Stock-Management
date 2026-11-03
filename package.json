@@ -8,6 +8,8 @@
     "typecheck": "tsc -p services/grpc-server && tsc -p services/graphql-server",
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
+    "stack:up": "docker compose up --build -d",
+    "stack:down": "docker compose down",
     "db:migrate": "npm run db:migrate --workspace=services/grpc-server",
     "db:seed": "npm run db:seed --workspace=services/grpc-server",
     "dev:grpc": "npm run dev --workspace=services/grpc-server",

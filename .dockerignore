@@ -1,0 +1,12 @@
+# Installed and generated inside the image instead
+**/node_modules
+**/dist
+services/grpc-server/src/gen
+services/grpc-server/src/generated
+
+# Never bake local secrets into an image
+**/.env
+
+.git
+.claude
+**/*.log

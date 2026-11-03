@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
-import { createClient } from "@connectrpc/connect";
-import { createConnectTransport } from "@connectrpc/connect-web";
-import { InventoryService } from "../../services/grpc-server/src/gen/proto/ecommerce/v1/inventory_connect";
+import AuthPanel from "./AuthPanel";
+import {
+  GraphQLRequestError,
+  gql,
+  grpcClient,
+  tokenStore,
+  type User,
+} from "./api";
 
-// Initialize Connect-Web transport for direct gRPC-Web streaming calls from browser to gRPC server
-const grpcWebTransport = createConnectTransport({
-  baseUrl: "http://127.0.0.1:50051",
-});
-
-const grpcClient = createClient(InventoryService, grpcWebTransport);
+const USER_FIELDS = "id email role";
 
 interface Product {
   id: string;
@@ -36,81 +36,115 @@ export default function App() {
   );
   const [isStreaming, setIsStreaming] = useState(false);
 
+  const [user, setUser] = useState<User | null>(null);
+
+  // 0. Authentication: register/login return a JWT, which api.ts attaches
+  // to every later GraphQL and gRPC call.
+  const handleAuth = async (
+    mode: "login" | "register",
+    email: string,
+    password: string,
+  ) => {
+    const data = await gql<Record<string, { token: string; user: User }>>(
+      `
+        mutation Auth($email: String!, $password: String!) {
+          ${mode}(email: $email, password: $password) {
+            token
+            user { ${USER_FIELDS} }
+          }
+        }
+      `,
+      { email, password },
+    );
+    tokenStore.set(data[mode].token);
+    setUser(data[mode].user);
+  };
+
+  const logout = () => {
+    tokenStore.clear();
+    setUser(null);
+    setActiveOrderId(null);
+    setOrderStreamLogs([]);
+  };
+
+  // A stored token may have expired since the last visit; ask the server.
+  const restoreSession = async () => {
+    if (!tokenStore.get()) return;
+    try {
+      const data = await gql<{ me: User | null }>(`query Me { me { ${USER_FIELDS} } }`);
+      if (data.me) setUser(data.me);
+      else tokenStore.clear();
+    } catch {
+      tokenStore.clear();
+    }
+  };
+
   // 1. Fetch Product Catalog using GraphQL Query (standard HTTP POST to /graphql endpoint)
   const fetchCatalog = async () => {
     setLoadingCatalog(true);
     setError(null);
     try {
-      const response = await fetch("http://127.0.0.1:4000/graphql", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          query: `
-            query GetCatalog {
-              products {
-                id
-                name
-                price
-                stock
-                description
-              }
-            }
-          `,
-        }),
-      });
-
-      const json = await response.json();
-      if (json.errors) {
-        setError(json.errors[0].message);
-      } else {
-        setProducts(json.data.products);
-      }
+      const data = await gql<{ products: Product[] }>(`
+        query GetCatalog {
+          products {
+            id
+            name
+            price
+            stock
+            description
+          }
+        }
+      `);
+      setProducts(data.products);
     } catch (err: any) {
-      setError(`Failed to reach GraphQL server: ${err.message}`);
+      setError(
+        err instanceof GraphQLRequestError
+          ? err.message
+          : `Failed to reach GraphQL server: ${err.message}`,
+      );
     } finally {
       setLoadingCatalog(false);
     }
   };
 
   useEffect(() => {
+    restoreSession();
     fetchCatalog();
   }, []);
 
   // 2. Perform Checkout using GraphQL Mutation
   const handleCheckout = async (productId: string) => {
     try {
-      const response = await fetch("http://127.0.0.1:4000/graphql", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          query: `
-            mutation CheckoutItem($productId: ID!, $quantity: Int!) {
-              checkout(productId: $productId, quantity: $quantity) {
-                orderId
-                success
-                message
-              }
+      const data = await gql<{
+        checkout: { orderId: string; success: boolean; message: string };
+      }>(
+        `
+          mutation CheckoutItem($productId: ID!, $quantity: Int!) {
+            checkout(productId: $productId, quantity: $quantity) {
+              orderId
+              success
+              message
             }
-          `,
-          variables: {
-            productId,
-            quantity: 1,
-          },
-        }),
-      });
+          }
+        `,
+        { productId, quantity: 1 },
+      );
+      const res = data.checkout;
 
-      const json = await response.json();
-      const res = json.data?.checkout;
-
-      if (res && res.success) {
+      if (res.success) {
         alert(`Order Placed! Order ID: ${res.orderId}`);
         setActiveOrderId(res.orderId);
         fetchCatalog();
         startGrpcOrderStream(res.orderId);
       } else {
-        alert(`Checkout failed: ${res?.message || "Unknown error"}`);
+        alert(`Checkout failed: ${res.message}`);
       }
     } catch (err: any) {
+      if (err instanceof GraphQLRequestError && err.code === "UNAUTHENTICATED") {
+        logout();
+        alert(`${err.message}`);
+        return;
+      }
       alert(`Checkout error: ${err.message}`);
     }
   };
@@ -169,6 +203,8 @@ export default function App() {
           </strong>
         </p>
       </header>
+
+      <AuthPanel user={user} onSubmit={handleAuth} onLogout={logout} />
 
       {/* SECTION 1: GRAPHQL CATALOG */}
       <section style={{ marginBottom: "40px" }}>
@@ -243,20 +279,24 @@ export default function App() {
                 </div>
 
                 <button
-                  disabled={p.stock <= 0}
+                  disabled={p.stock <= 0 || !user}
                   onClick={() => handleCheckout(p.id)}
                   style={{
                     marginTop: "16px",
                     padding: "10px",
-                    backgroundColor: p.stock > 0 ? "#0066cc" : "#ccc",
+                    backgroundColor: p.stock > 0 && user ? "#0066cc" : "#ccc",
                     color: "white",
                     border: "none",
                     borderRadius: "4px",
-                    cursor: p.stock > 0 ? "pointer" : "not-allowed",
+                    cursor: p.stock > 0 && user ? "pointer" : "not-allowed",
                     fontWeight: "bold",
                   }}
                 >
-                  {p.stock > 0 ? "Buy Now (GraphQL Mutation)" : "Out of Stock"}
+                  {p.stock <= 0
+                    ? "Out of Stock"
+                    : user
+                      ? "Buy Now (GraphQL Mutation)"
+                      : "Sign in to buy"}
                 </button>
               </div>
             ))}

@@ -1,0 +1,87 @@
+// The gRPC inventory service owns this database. The GraphQL BFF never
+// connects to it directly; it goes through the gRPC API instead.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+}
+
+enum OrderStatus {
+  ORDER_PLACED
+  PAYMENT_CONFIRMED
+  WAREHOUSE_PACKING
+  DISPATCHED
+  DELIVERED
+  CANCELLED
+}
+
+model Product {
+  id          String   @id @default(uuid()) @db.Uuid
+  sku         String   @unique
+  name        String
+  description String   @default("")
+  price       Decimal  @db.Decimal(10, 2)
+  // A CHECK (stock >= 0) constraint is added in the migration SQL,
+  // since Prisma's schema language can't express CHECK constraints.
+  stock       Int      @default(0)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  orderItems OrderItem[]
+
+  @@map("products")
+}
+
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  // Stored lower-cased so lookups and uniqueness ignore case.
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  role         UserRole @default(CUSTOMER)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  orders Order[]
+
+  @@map("users")
+}
+
+model Order {
+  id        String      @id @default(uuid()) @db.Uuid
+  userId    String      @map("user_id") @db.Uuid
+  status    OrderStatus @default(ORDER_PLACED)
+  total     Decimal     @db.Decimal(12, 2)
+  createdAt DateTime    @default(now()) @map("created_at")
+  updatedAt DateTime    @updatedAt @map("updated_at")
+
+  // Restrict: a user with orders can't be deleted, which keeps order history intact.
+  user  User        @relation(fields: [userId], references: [id], onDelete: Restrict)
+  items OrderItem[]
+
+  @@index([userId])
+  @@map("orders")
+}
+
+model OrderItem {
+  id        String  @id @default(uuid()) @db.Uuid
+  orderId   String  @map("order_id") @db.Uuid
+  productId String  @map("product_id") @db.Uuid
+  quantity  Int
+  // Price at the time of purchase, so later price changes don't rewrite history.
+  unitPrice Decimal @map("unit_price") @db.Decimal(10, 2)
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@unique([orderId, productId])
+  @@index([productId])
+  @@map("order_items")
+}

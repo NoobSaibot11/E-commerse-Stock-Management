@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+package ecommerce.v1;
+
+// A signed-in user, as returned to clients (never includes the password hash)
+message User {
+  string id = 1;
+  string email = 2;
+  string role = 3; // "CUSTOMER" or "ADMIN"
+}
+
+// Request to create a customer account
+message RegisterRequest {
+  string email = 1;
+  string password = 2;
+}
+
+// Request to sign in with email and password
+message LoginRequest {
+  string email = 1;
+  string password = 2;
+}
+
+// Returned by Register and Login. Send the token on later calls as
+// "Authorization: Bearer <token>".
+message AuthResponse {
+  User user = 1;
+  string token = 2;
+}
+
+// Request for the user identified by the call's bearer token
+message GetMeRequest {}
+
+// Response containing the current user
+message GetMeResponse {
+  User user = 1;
+}
+
+// gRPC Auth Service definition
+service AuthService {
+  // Unary RPC: Create a customer account and sign in
+  rpc Register(RegisterRequest) returns (AuthResponse);
+
+  // Unary RPC: Exchange email and password for a JWT
+  rpc Login(LoginRequest) returns (AuthResponse);
+
+  // Unary RPC: Return the user the bearer token belongs to
+  rpc GetMe(GetMeRequest) returns (GetMeResponse);
+}

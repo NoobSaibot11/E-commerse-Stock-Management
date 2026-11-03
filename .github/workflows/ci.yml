@@ -1,0 +1,98 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+# A new push to the same branch or PR cancels the run it replaces.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Type-check and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    services:
+      # The gRPC service's tests run against a real database. Global test
+      # setup creates and migrates ecommerce_test inside this server.
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_USER: ecommerce
+          POSTGRES_PASSWORD: ecommerce
+          POSTGRES_DB: ecommerce
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U ecommerce -d ecommerce"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      TEST_DATABASE_URL: postgresql://ecommerce:ecommerce@localhost:5432/ecommerce_test
+      # Same as in the Dockerfile: no telemetry call from the Prisma CLI.
+      CHECKPOINT_DISABLE: "1"
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate protobuf and Prisma code
+        # prisma.config.ts requires DATABASE_URL; `generate` never connects.
+        run: npm run generate
+        env:
+          DATABASE_URL: postgresql://unused:unused@localhost:5432/unused
+
+      - name: Type-check
+        run: npm run typecheck
+
+      - name: Test
+        run: npm test
+
+  docker:
+    name: Docker stack smoke test
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+
+      - name: Build images
+        run: docker compose build
+
+      - name: Start the stack
+        # --wait returns once every service passes its health check and the
+        # migrate job has exited successfully.
+        run: docker compose up -d --wait --wait-timeout 180
+
+      - name: Smoke test through nginx
+        run: npm run smoke
+
+      - name: Show service logs
+        if: failure()
+        run: docker compose logs --no-color
+
+      - name: Stop the stack
+        if: always()
+        run: docker compose down --volumes

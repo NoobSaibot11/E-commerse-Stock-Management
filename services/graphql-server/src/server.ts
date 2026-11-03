@@ -1,10 +1,10 @@
 import express from "express";
 import { createYoga } from "graphql-yoga";
 import { makeExecutableSchema } from "@graphql-tools/schema";
-import { typeDefs, resolvers } from "./schema.js";
+import { typeDefs, resolvers, type Context } from "./schema.js";
 
 const app = express();
-const PORT = 4000;
+const PORT = Number(process.env.PORT ?? 4000);
 
 // Create executable GraphQL Schema
 const schema = makeExecutableSchema({
@@ -17,6 +17,14 @@ const yoga = createYoga({
   schema,
   graphqlEndpoint: "/graphql",
   landingPage: true, // Enables interactive GraphiQL IDE in browser
+  context: ({ request }): Context => ({
+    authorization: request.headers.get("authorization"),
+  }),
+});
+
+// Liveness probe for Docker / orchestrators
+app.get("/health", (_req, res) => {
+  res.json({ status: "ok" });
 });
 
 // Bind Yoga middleware to Express

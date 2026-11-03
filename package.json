@@ -3,6 +3,16 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
+    "generate": "buf generate && npm run db:generate --workspace=services/grpc-server",
+    "test": "npm test --workspace=services/grpc-server --workspace=services/graphql-server",
+    "typecheck": "tsc -p services/grpc-server && tsc -p services/graphql-server && tsc -p frontend",
+    "smoke": "node scripts/smoke-test.mjs",
+    "db:up": "docker compose up -d postgres",
+    "db:down": "docker compose down",
+    "stack:up": "docker compose up --build -d",
+    "stack:down": "docker compose down",
+    "db:migrate": "npm run db:migrate --workspace=services/grpc-server",
+    "db:seed": "npm run db:seed --workspace=services/grpc-server",
     "dev:grpc": "npm run dev --workspace=services/grpc-server",
     "dev:graphql": "npm run dev --workspace=services/graphql-server",
     "dev:frontend": "npm run dev --workspace=frontend"
@@ -11,5 +21,16 @@
     "services/grpc-server",
     "services/graphql-server",
     "frontend"
-  ]
+  ],
+  "devDependencies": {
+    "@bufbuild/buf": "^1.50.0",
+    "@bufbuild/protoc-gen-es": "^2.15.0"
+  },
+  "allowScripts": {
+    "@bufbuild/buf@1.75.0": true,
+    "prisma@7.10.1": true,
+    "@prisma/engines@7.10.1": true,
+    "esbuild@0.28.2": true,
+    "esbuild@0.25.12": true
+  }
 }

@@ -1,0 +1,104 @@
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --text: #1a1d21;
+  --muted: #646b75;
+  --border: #e2e5ea;
+  --primary: #0b63ce;
+  --primary-hover: #0952ab;
+  --success-bg: #e8f6ee;
+  --success-text: #146c3b;
+  --error-bg: #fdecec;
+  --error-text: #b42318;
+  --radius: 10px;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); }
+h1, h2, h3 { margin: 0 0 6px; line-height: 1.2; }
+h1 { font-size: 1.6rem; }
+a { color: var(--primary); }
+
+.page { max-width: 960px; margin: 0 auto; padding: 0 16px 48px; }
+.site-header {
+  display: flex; justify-content: space-between; align-items: center;
+  flex-wrap: wrap; gap: 12px; padding: 20px 0; margin-bottom: 24px;
+  border-bottom: 1px solid var(--border);
+}
+.brand { font-size: 1.25rem; font-weight: 700; color: var(--text); text-decoration: none; }
+.user-bar { display: flex; align-items: center; gap: 12px; }
+.badge {
+  margin-left: 6px; padding: 2px 8px; border-radius: 999px; font-size: 0.75rem;
+  background: #eef3fb; color: var(--primary); font-weight: 600;
+}
+
+.muted { color: var(--muted); }
+.small { font-size: 0.875rem; }
+.center { text-align: center; }
+
+.card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 20px;
+}
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 10px 16px; border-radius: 8px; font: inherit; font-weight: 600;
+  border: 1px solid transparent; cursor: pointer; text-decoration: none;
+}
+.btn:disabled { cursor: not-allowed; opacity: 0.55; }
+.btn-primary { background: var(--primary); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
+.btn-ghost { background: transparent; border-color: var(--border); color: var(--text); }
+.btn-ghost:hover:not(:disabled) { background: #eef0f3; }
+
+.alert { padding: 10px 14px; border-radius: 8px; margin: 0 0 16px; }
+.alert-success { background: var(--success-bg); color: var(--success-text); }
+.alert-error { background: var(--error-bg); color: var(--error-text); }
+
+/* Login / sign-up */
+.auth-card { max-width: 420px; margin: 32px auto; }
+.stack { display: flex; flex-direction: column; gap: 14px; margin-top: 18px; }
+.field { display: flex; flex-direction: column; gap: 6px; font-weight: 500; }
+.field input, .qty input {
+  font: inherit; padding: 10px 12px; border: 1px solid var(--border);
+  border-radius: 8px; background: #fff;
+}
+.field input:focus, .qty input:focus { outline: 2px solid var(--primary); outline-offset: -1px; }
+.stack .alert { margin: 0; }
+.switch { margin: 18px 0 0; }
+
+/* Shop */
+.section-head {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  gap: 12px; margin-bottom: 20px;
+}
+.product-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px; margin-bottom: 32px;
+}
+.product-card { display: flex; flex-direction: column; justify-content: space-between; gap: 16px; }
+.price { font-size: 1.25rem; font-weight: 700; margin: 8px 0 4px; }
+.stock { margin: 0; font-size: 0.875rem; font-weight: 500; }
+.stock.in { color: var(--success-text); }
+.stock.out { color: var(--error-text); }
+.buy-form { display: flex; gap: 8px; align-items: flex-end; }
+.qty { display: flex; flex-direction: column; gap: 4px; font-size: 0.75rem; color: var(--muted); }
+.qty input { width: 72px; padding: 9px 8px; }
+.buy-form .btn { flex: 1; }
+
+/* Order tracker */
+.tracker { border-color: #c9dcf5; background: #f7faff; }
+.progress { height: 12px; background: #e3e8ef; border-radius: 999px; overflow: hidden; margin-top: 12px; }
+.progress-fill { height: 100%; background: var(--primary); transition: width 0.5s ease; }
+.progress-label { margin: 6px 0 12px; }
+.timeline { list-style: none; padding: 0; margin: 0; border-left: 2px solid #c9dcf5; }
+.timeline li { position: relative; padding: 4px 0 8px 16px; }
+.timeline li::before {
+  content: ""; position: absolute; left: -6px; top: 10px; width: 10px; height: 10px;
+  border-radius: 50%; background: var(--primary);
+}
+.time { display: inline-block; min-width: 92px; color: var(--muted); font-size: 0.875rem; }
